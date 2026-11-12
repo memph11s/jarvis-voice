@@ -41,7 +41,7 @@ class VoiceSessionTest(unittest.TestCase):
 
     def test_recording_stops_only_at_end_word(self):
         session, listened, texts, shutdowns = self.make_session(
-            [(False, {"partial": "джарвис"})],
+            [(True, {"text": "джарвис"})],
             [
                 (False, {"partial": "привет"}),
                 (False, {"partial": ""}),
@@ -80,7 +80,7 @@ class VoiceSessionTest(unittest.TestCase):
 
     def test_silence_does_not_finish_or_cancel_recording(self):
         session, listened, texts, shutdowns = self.make_session(
-            [(False, {"partial": "джарвис"})],
+            [(True, {"text": "джарвис"})],
             [(False, {"partial": ""})],
         )
 
@@ -94,7 +94,7 @@ class VoiceSessionTest(unittest.TestCase):
 
     def test_end_word_inserts_partial_text(self):
         session, listened, texts, shutdowns = self.make_session(
-            [(False, {"partial": "джарвис"})],
+            [(True, {"text": "джарвис"})],
             [
                 (False, {"partial": "открой документацию"}),
                 (False, {"partial": "открой документацию конец"}),
@@ -110,7 +110,7 @@ class VoiceSessionTest(unittest.TestCase):
 
     def test_final_parts_are_combined(self):
         session, listened, texts, shutdowns = self.make_session(
-            [(False, {"partial": "джарвис"})],
+            [(True, {"text": "джарвис"})],
             [
                 (True, {"text": "первая часть"}),
                 (True, {"text": "вторая часть"}),
@@ -128,8 +128,8 @@ class VoiceSessionTest(unittest.TestCase):
     def test_after_end_session_waits_for_next_wake_word(self):
         session, listened, texts, shutdowns = self.make_session(
             [
-                (False, {"partial": "джарвис"}),
-                (False, {"partial": "джарвис"}),
+                (True, {"text": "джарвис"}),
+                (True, {"text": "джарвис"}),
             ],
             [
                 (False, {"partial": "первый текст конец"}),
@@ -161,7 +161,7 @@ class VoiceSessionTest(unittest.TestCase):
 
     def test_shutdown_phrase_stops_session_while_recording(self):
         session, listened, texts, shutdowns = self.make_session(
-            [(False, {"partial": "джарвис"})],
+            [(True, {"text": "джарвис"})],
             [(False, {"partial": "пока джарвис"})],
         )
 
@@ -171,6 +171,66 @@ class VoiceSessionTest(unittest.TestCase):
         self.assertEqual(session.state, SessionState.STOPPED)
         self.assertEqual(shutdowns, [True])
         self.assertEqual(texts, [])
+
+    def test_partial_wake_word_does_not_start_recording(self):
+        session, listened, texts, shutdowns = self.make_session(
+            [(False, {"partial": "джарвис"})],
+            [],
+        )
+
+        session.process(b"audio")
+
+        self.assertEqual(session.state, SessionState.IDLE)
+        self.assertEqual(listened, [])
+
+    def test_unsure_wake_word_does_not_start_recording(self):
+        session, listened, texts, shutdowns = self.make_session(
+            [(True, {"text": "джарвис", "result": [{"word": "джарвис", "conf": 0.4}]})],
+            [],
+            config=SessionConfig(min_wake_confidence=0.8),
+        )
+
+        session.process(b"audio")
+
+        self.assertEqual(session.state, SessionState.IDLE)
+        self.assertEqual(listened, [])
+
+    def test_confident_wake_word_starts_recording(self):
+        session, listened, texts, shutdowns = self.make_session(
+            [(True, {"text": "джарвис", "result": [{"word": "джарвис", "conf": 0.95}]})],
+            [],
+            config=SessionConfig(min_wake_confidence=0.8),
+        )
+
+        session.process(b"audio")
+
+        self.assertEqual(session.state, SessionState.LISTENING)
+        self.assertEqual(listened, [True])
+
+    def test_after_end_word_only_listens_until_next_wake_word(self):
+        session, listened, texts, shutdowns = self.make_session(
+            [
+                (True, {"text": "джарвис"}),
+                (True, {"text": "джарвис"}),
+                (True, {"text": "привет"}),
+                (True, {"text": "джарвис"}),
+            ],
+            [(True, {"text": "текст конец"}), (True, {"text": "лишняя речь"})],
+            config=SessionConfig(wake_cooldown_chunks=2),
+        )
+
+        session.process(b"audio")  # джарвис: запись
+        session.process(b"audio")  # текст конец: вставка
+        self.assertEqual(texts, ["текст"])
+        self.assertEqual(session.state, SessionState.IDLE)
+
+        session.process(b"audio")  # пауза после «конец»
+        session.process(b"audio")
+        self.assertEqual(session.state, SessionState.IDLE)
+
+        session.process(b"audio")  # джарвис из грамматики (сдвиг событий из-за паузы не важен)
+        self.assertEqual(listened, [True, True])
+        self.assertEqual(session.state, SessionState.LISTENING)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,21 @@ PRIVATE_MODE = os.environ.get("JARVIS_PRIVATE_MODE", "true").lower() not in {"0"
 OLLAMA_MODEL = os.environ.get("JARVIS_OLLAMA_MODEL", "qwen3:4b")
 ollama = OllamaClient(model=OLLAMA_MODEL)
 greeted = False
+# Уверенность, с которой должно быть распознано «джарвис», чтобы начать запись (0..1).
+WAKE_CONFIDENCE = float(os.environ.get("JARVIS_WAKE_CONFIDENCE", "0.8"))
+# После «конец» около секунды (блоки по 0,25 с) не реагируем на wake word.
+WAKE_COOLDOWN_CHUNKS = 4
+# Обычные слова в грамматике нужны, чтобы посторонняя речь распознавалась как они,
+# а не подгонялась под «джарвис».
+WAKE_GRAMMAR = [
+    "джарвис",
+    "пока джарвис",
+    "конец",
+    "да", "нет", "так", "вот", "это", "что", "как", "где", "все",
+    "давай", "сейчас", "потом", "привет", "хорошо", "ладно", "спасибо",
+    "надо", "можно", "текст", "дальше", "жарко", "дарвин", "джаз", "вис",
+    "[unk]",
+]
 
 
 class ShutdownRequested(Exception):
@@ -87,8 +102,9 @@ def main() -> int:
 
     SetLogLevel(-1)
     model = Model(str(MODEL_PATH))
-    wake_grammar = json.dumps(["джарвис", "пока джарвис", "[unk]"], ensure_ascii=False)
+    wake_grammar = json.dumps(WAKE_GRAMMAR, ensure_ascii=False)
     wake_recognizer = KaldiRecognizer(model, SAMPLE_RATE, wake_grammar)
+    wake_recognizer.SetWords(True)
     speech_recognizer = KaldiRecognizer(model, SAMPLE_RATE)
     audio_queue: queue.Queue[bytes] = queue.Queue()
 
@@ -110,6 +126,7 @@ def main() -> int:
                 break
         wake_recognizer.Reset()
         speech_recognizer.Reset()
+        print("Жду «Джарвис»...", flush=True)
 
     session = VoiceSession(
         wake_recognizer,
@@ -117,7 +134,10 @@ def main() -> int:
         on_listen=handle_listen,
         on_text=handle_text,
         on_shutdown=shutdown,
-        config=SessionConfig(),
+        config=SessionConfig(
+            min_wake_confidence=WAKE_CONFIDENCE,
+            wake_cooldown_chunks=WAKE_COOLDOWN_CHUNKS,
+        ),
     )
 
     def audio_callback(indata, frames, time_info, status) -> None:

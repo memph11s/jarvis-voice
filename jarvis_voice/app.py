@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MODEL_PATH = ROOT / "models" / "vosk-model-small-ru-0.22"
 SAMPLE_RATE = 16000
 GREETING = os.environ.get("JARVIS_GREETING", "Здравствуйте, Сын Пелея")
+FAREWELL = os.environ.get("JARVIS_FAREWELL", "Хороших выходных, Сэр")
 PRIVATE_MODE = os.environ.get("JARVIS_PRIVATE_MODE", "true").lower() not in {"0", "false", "no"}
 OLLAMA_MODEL = os.environ.get("JARVIS_OLLAMA_MODEL", "qwen3:4b")
 ollama = OllamaClient(model=OLLAMA_MODEL)
@@ -72,6 +73,10 @@ def answer_question(question: str) -> None:
 
 
 def shutdown() -> None:
+    try:
+        speak_text(FAREWELL)
+    except Exception as error:
+        print(f"Не удалось озвучить прощание: {error}", file=sys.stderr, flush=True)
     raise ShutdownRequested
 
 

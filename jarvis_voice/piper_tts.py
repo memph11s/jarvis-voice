@@ -39,10 +39,10 @@ def speak(text: str) -> bool:
         )
         if result.returncode != 0 or not output.is_file():
             return False
-        return _play_wav(output)
+        return play_wav(output)
 
 
-def _play_wav(path: Path) -> bool:
+def play_wav(path: Path) -> bool:
     system = platform.system()
     if system == "Darwin":
         command = ["afplay", str(path)]

@@ -35,9 +35,11 @@ class GreetingTest(unittest.TestCase):
         speak_greeting("Привет, Никита")
 
         run.assert_called_once_with(["spd-say", "--wait", "Привет, Никита"], check=False)
+
+    @patch("jarvis_voice.silero_tts.speak", return_value=False)
     @patch("jarvis_voice.platform_io.speak_greeting")
     @patch("jarvis_voice.piper_tts.speak", return_value=True)
-    def test_piper_is_preferred_for_speech(self, piper, system_speech):
+    def test_piper_is_used_when_silero_is_unavailable(self, piper, system_speech, silero):
         from jarvis_voice.platform_io import speak_text
 
         speak_text("Привет")
@@ -45,14 +47,27 @@ class GreetingTest(unittest.TestCase):
         piper.assert_called_once_with("Привет")
         system_speech.assert_not_called()
 
+    @patch("jarvis_voice.silero_tts.speak", return_value=False)
     @patch("jarvis_voice.platform_io.speak_greeting")
     @patch("jarvis_voice.piper_tts.speak", return_value=False)
-    def test_system_voice_is_fallback_when_piper_is_unavailable(self, piper, system_speech):
+    def test_system_voice_is_fallback_when_neural_voices_are_unavailable(self, piper, system_speech, silero):
         from jarvis_voice.platform_io import speak_text
 
         speak_text("Привет")
 
         system_speech.assert_called_once_with("Привет")
+
+    @patch("jarvis_voice.silero_tts.speak", return_value=True)
+    @patch("jarvis_voice.platform_io.speak_greeting")
+    @patch("jarvis_voice.piper_tts.speak")
+    def test_silero_is_preferred_for_speech(self, piper, system_speech, silero):
+        from jarvis_voice.platform_io import speak_text
+
+        speak_text("Привет")
+
+        silero.assert_called_once_with("Привет")
+        piper.assert_not_called()
+        system_speech.assert_not_called()
 
 
 if __name__ == "__main__":

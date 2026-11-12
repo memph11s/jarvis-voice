@@ -49,6 +49,12 @@ if (-not (Test-Path (Join-Path $PiperDir "ru_RU-dmitri-medium.onnx"))) {
     Invoke-WebRequest -Uri "$PiperBase/ru_RU-dmitri-medium.onnx.json" -OutFile (Join-Path $PiperDir "ru_RU-dmitri-medium.onnx.json")
 }
 
+$SileroDir = Join-Path $Root "models\silero"
+if (-not (Test-Path (Join-Path $SileroDir "v5_6_ru.pt"))) {
+    New-Item -ItemType Directory -Force -Path $SileroDir | Out-Null
+    Invoke-WebRequest -Uri "https://models.silero.ai/models/tts/ru/v5_6_ru.pt" -OutFile (Join-Path $SileroDir "v5_6_ru.pt")
+}
+
 & $VenvPython -m unittest discover -s (Join-Path $Root "tests") -t $Root -v
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "`nГотово. Запуск: $Root\run.ps1"

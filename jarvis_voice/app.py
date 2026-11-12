@@ -17,7 +17,7 @@ MODEL_PATH = ROOT / "models" / "vosk-model-small-ru-0.22"
 SAMPLE_RATE = 16000
 GREETING = os.environ.get("JARVIS_GREETING", "Здравствуйте, Сын Пелея")
 PRIVATE_MODE = os.environ.get("JARVIS_PRIVATE_MODE", "true").lower() not in {"0", "false", "no"}
-OLLAMA_MODEL = os.environ.get("JARVIS_OLLAMA_MODEL", "qwen2.5-coder:7b")
+OLLAMA_MODEL = os.environ.get("JARVIS_OLLAMA_MODEL", "qwen3:4b")
 ollama = OllamaClient(model=OLLAMA_MODEL)
 
 

@@ -75,8 +75,11 @@ def speak_greeting(text: str) -> None:
 
 
 def speak_text(text: str) -> None:
+    from jarvis_voice.silero_tts import speak as speak_with_silero
     from jarvis_voice.piper_tts import speak as speak_with_piper
 
+    if speak_with_silero(text):
+        return
     if speak_with_piper(text):
         return
     speak_greeting(text)

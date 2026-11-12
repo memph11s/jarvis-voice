@@ -43,5 +43,11 @@ if [[ ! -f "$PIPER_DIR/ru_RU-dmitri-medium.onnx" ]]; then
   curl -fL --connect-timeout 15 "$PIPER_BASE/ru_RU-dmitri-medium.onnx.json" -o "$PIPER_DIR/ru_RU-dmitri-medium.onnx.json"
 fi
 
+SILERO_DIR="$ROOT/models/silero"
+if [[ ! -f "$SILERO_DIR/v5_6_ru.pt" ]]; then
+  mkdir -p "$SILERO_DIR"
+  curl -fL --connect-timeout 15 "https://models.silero.ai/models/tts/ru/v5_6_ru.pt" -o "$SILERO_DIR/v5_6_ru.pt"
+fi
+
 "$ROOT/.venv/bin/python" -m unittest discover -s "$ROOT/tests" -t "$ROOT" -v
 printf '\nГотово. Запуск: %s/run.sh\n' "$ROOT"

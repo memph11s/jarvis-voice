@@ -5,7 +5,7 @@ from urllib.request import Request, urlopen
 class OllamaClient:
     def __init__(
         self,
-        model: str = "qwen2.5-coder:7b",
+        model: str = "qwen3:4b",
         base_url: str = "http://127.0.0.1:11434",
         timeout: float = 120.0,
     ) -> None:

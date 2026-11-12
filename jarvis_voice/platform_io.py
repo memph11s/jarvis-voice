@@ -74,6 +74,14 @@ def speak_greeting(text: str) -> None:
     play_beep()
 
 
+def speak_text(text: str) -> None:
+    from jarvis_voice.piper_tts import speak as speak_with_piper
+
+    if speak_with_piper(text):
+        return
+    speak_greeting(text)
+
+
 def macos_accessibility_enabled() -> bool:
     result = subprocess.run(
         ["osascript", "-e", 'tell application "System Events" to get UI elements enabled'],

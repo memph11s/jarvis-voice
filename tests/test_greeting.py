@@ -35,6 +35,24 @@ class GreetingTest(unittest.TestCase):
         speak_greeting("Привет, Никита")
 
         run.assert_called_once_with(["spd-say", "--wait", "Привет, Никита"], check=False)
+    @patch("jarvis_voice.platform_io.speak_greeting")
+    @patch("jarvis_voice.piper_tts.speak", return_value=True)
+    def test_piper_is_preferred_for_speech(self, piper, system_speech):
+        from jarvis_voice.platform_io import speak_text
+
+        speak_text("Привет")
+
+        piper.assert_called_once_with("Привет")
+        system_speech.assert_not_called()
+
+    @patch("jarvis_voice.platform_io.speak_greeting")
+    @patch("jarvis_voice.piper_tts.speak", return_value=False)
+    def test_system_voice_is_fallback_when_piper_is_unavailable(self, piper, system_speech):
+        from jarvis_voice.platform_io import speak_text
+
+        speak_text("Привет")
+
+        system_speech.assert_called_once_with("Привет")
 
 
 if __name__ == "__main__":

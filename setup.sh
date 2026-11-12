@@ -35,5 +35,13 @@ if [[ ! -f "$MODEL_DIR/conf/model.conf" ]]; then
   done
 fi
 
+PIPER_DIR="$ROOT/models/piper"
+PIPER_BASE="https://huggingface.co/rhasspy/piper-voices/resolve/main/ru/ru_RU/dmitri/medium"
+if [[ ! -f "$PIPER_DIR/ru_RU-dmitri-medium.onnx" ]]; then
+  mkdir -p "$PIPER_DIR"
+  curl -fL --connect-timeout 15 "$PIPER_BASE/ru_RU-dmitri-medium.onnx" -o "$PIPER_DIR/ru_RU-dmitri-medium.onnx"
+  curl -fL --connect-timeout 15 "$PIPER_BASE/ru_RU-dmitri-medium.onnx.json" -o "$PIPER_DIR/ru_RU-dmitri-medium.onnx.json"
+fi
+
 "$ROOT/.venv/bin/python" -m unittest discover -s "$ROOT/tests" -t "$ROOT" -v
 printf '\nГотово. Запуск: %s/run.sh\n' "$ROOT"

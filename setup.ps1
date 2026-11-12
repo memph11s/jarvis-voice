@@ -41,6 +41,14 @@ if (-not (Test-Path (Join-Path $ModelDir "conf\model.conf"))) {
     }
 }
 
+$PiperDir = Join-Path $Root "models\piper"
+$PiperBase = "https://huggingface.co/rhasspy/piper-voices/resolve/main/ru/ru_RU/dmitri/medium"
+if (-not (Test-Path (Join-Path $PiperDir "ru_RU-dmitri-medium.onnx"))) {
+    New-Item -ItemType Directory -Force -Path $PiperDir | Out-Null
+    Invoke-WebRequest -Uri "$PiperBase/ru_RU-dmitri-medium.onnx" -OutFile (Join-Path $PiperDir "ru_RU-dmitri-medium.onnx")
+    Invoke-WebRequest -Uri "$PiperBase/ru_RU-dmitri-medium.onnx.json" -OutFile (Join-Path $PiperDir "ru_RU-dmitri-medium.onnx.json")
+}
+
 & $VenvPython -m unittest discover -s (Join-Path $Root "tests") -t $Root -v
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 Write-Host "`nГотово. Запуск: $Root\run.ps1"

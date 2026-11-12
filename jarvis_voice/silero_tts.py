@@ -2,6 +2,7 @@ import importlib.util
 import os
 import sys
 import tempfile
+import warnings
 import wave
 from pathlib import Path
 
@@ -23,7 +24,9 @@ def _load_model():
         import torch
 
         torch.set_num_threads(4)
-        _model = torch.package.PackageImporter(str(MODEL_PATH)).load_pickle("tts_models", "model")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", SyntaxWarning)
+            _model = torch.package.PackageImporter(str(MODEL_PATH)).load_pickle("tts_models", "model")
     return _model
 
 

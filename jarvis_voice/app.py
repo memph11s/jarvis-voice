@@ -19,6 +19,7 @@ GREETING = os.environ.get("JARVIS_GREETING", "Здравствуйте, Сын �
 PRIVATE_MODE = os.environ.get("JARVIS_PRIVATE_MODE", "true").lower() not in {"0", "false", "no"}
 OLLAMA_MODEL = os.environ.get("JARVIS_OLLAMA_MODEL", "qwen3:4b")
 ollama = OllamaClient(model=OLLAMA_MODEL)
+greeted = False
 
 
 class ShutdownRequested(Exception):
@@ -26,8 +27,11 @@ class ShutdownRequested(Exception):
 
 
 def on_listen() -> None:
+    global greeted
+    text = "Слушаю" if greeted else GREETING
+    greeted = True
     try:
-        speak_text(GREETING)
+        speak_text(text)
     except Exception as error:
         print(f"Не удалось озвучить приветствие: {error}", file=sys.stderr, flush=True)
         play_beep()
